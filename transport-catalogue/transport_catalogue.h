@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <execution>
+#include <set>
 
 #include "geo.h"
 
@@ -20,8 +21,7 @@ struct Bus;
 
 struct Stop {
     std::string name;
-    double latitude;
-    double longitude;
+    geo::Coordinates coordinates;
     //вектор хранит увказатели на все автобусы, проезжающие остановку
     std::vector<Bus*> buses;
 };
@@ -31,11 +31,6 @@ struct Bus {
     std::deque<Stop*> stops;
 };
 
-struct Distance {
-    const Stop* A;
-    const Stop* B;
-    int distance;
-};
 
 class DistanceHasher {
 public:
@@ -53,21 +48,22 @@ using DistanceMap = std::unordered_map<std::pair<const Stop*, const Stop*>, int,
 
 class TransportCatalogue {
 public:
-    void AddBus(Bus&& bus);
-    void AddStop(Stop&& stop);
-    void AddDistance(std::vector<Distance> distances);
+    void AddBus(const Bus&& bus);
+    void AddStop(const Stop&& stop);
+    //void AddDistance(std::vector<Distance> distances);
+    void AddDistance(const Stop* stop_a, const Stop* stop_b, int distance);
 
     Bus* GetBus(std::string_view stop);
     Stop* GetStop(std::string_view stop);
 
-    size_t GetUniqueStopsForBus(const Bus* bus);
+    std::set<const Stop*> GetUniqueStopsForBus(const Bus* bus);
 
-    std::unordered_set<const Bus*> GetUniqueBusesForStop(Stop* stop);
+    std::set<std::string> GetUniqueBusesForStop(Stop* stop);
 
     double GetLength(Bus* bus);
 
     size_t GetDistanceForStop(const Stop* point_a, const Stop* point_b);
-    
+
     size_t GetDistanceForBus(Bus* bus);
 
 private:
@@ -80,6 +76,10 @@ private:
     BusMap bus_names_;
 
     DistanceMap distance_beetween_stops_;
+
+
+    std::deque<Stop*> GetAllStopsForBus(const Bus* bus);
+    std::vector<Bus*> GetAllBusesForStop(Stop* stop);
 };
 
 }//завершаем пространство имён transport_catalogue

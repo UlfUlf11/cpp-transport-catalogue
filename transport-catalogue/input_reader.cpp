@@ -25,10 +25,10 @@ Stop ParseStop(std::string str) {
     stop.name = str.substr(stop_word, colon_pos - stop_word);
 
     //stod извлекает число с плавающей точкой из строки str
-    stop.latitude = stod(str.substr(colon_pos + space,
+    stop.coordinates.lat = stod(str.substr(colon_pos + space,
         comma_pos - colon_pos - space));
 
-    stop.longitude = stod(str.substr(comma_pos + space));
+    stop.coordinates.lng = stod(str.substr(comma_pos + space));
     
     return stop;
 }
@@ -85,16 +85,13 @@ Bus ParseBus(TransportCatalogue& catalogue, std::string str) {
     return bus;
 }
 
-std::vector<Distance> ParseDistance(TransportCatalogue& catalogue, std::string str) {
+void ParseDistance(TransportCatalogue& catalogue, std::string str) {
     //двоеточие - признак окончания названия остановки
     size_t colon_pos = str.find(':');
     //5 - это длина слова Stop и пробела после него в запросе
     size_t stop_word = 5;
     //от двоеточия, до начала ввода широты
     size_t space = 2;
-
-    //вектор расстояний от одной станции до других
-    std::vector<Distance> distances;
 
     //отсекаем слово стоп и все после двоеточия вслючительно
     std::string name = str.substr(stop_word, colon_pos - stop_word);
@@ -114,17 +111,22 @@ std::vector<Distance> ParseDistance(TransportCatalogue& catalogue, std::string s
         //название станции, до которой вводится расстояние
         distance_to = distance_to.substr(0, distance_to.find(','));
 
-        //имя станции от которой вводим расстояние, до которой вводим расстояние и расстояние в метрах
-        distances.push_back({ catalogue.GetStop(name), catalogue.GetStop(distance_to), distance });
+        auto point_a = catalogue.GetStop(name);
+        auto point_b = catalogue.GetStop(distance_to);
+
+        catalogue.AddDistance(point_a, point_b, distance);
 
         str = str.substr(str.find(',') + space);
+
     }
     //обрабатываем расстояние до последней станции в запросе
     std::string last_station_name = str.substr(str.find('m') + stop_word);
     int distance = stoi(str.substr(0, str.find('m')));
 
-    distances.push_back({ catalogue.GetStop(name), catalogue.GetStop(last_station_name), distance });
-    return distances;
+    auto point_a = catalogue.GetStop(name);
+    auto point_b = catalogue.GetStop(last_station_name);
+
+    catalogue.AddDistance(point_a, point_b, distance);
 }
 
 
@@ -135,12 +137,12 @@ std::vector<Distance> ParseDistance(TransportCatalogue& catalogue, std::string s
 //Обратите внимание, что в маршруте может фигурировать остановка, объявленная 
 //после этого маршрута. Рекомендуется сохранить запросы, и вначале обработать 
 //все запросы остановок, а затем, все запросы маршрутов.
-void Input(TransportCatalogue& catalogue) {
+void Input(std::istream& in, TransportCatalogue& catalogue) {
 
     //кол-во запросов строкой
     std::string str_input_count;
     //считываем кол-во запросов
-    std::getline(std::cin, str_input_count);
+    std::getline(in, str_input_count);
 
     if (str_input_count != "") {
         //строка будущего запроса
@@ -155,7 +157,7 @@ void Input(TransportCatalogue& catalogue) {
 
         for (int i = 0; i < requests_count; ++i) {
             //считываем запрос
-            std::getline(std::cin, input_query);
+            std::getline(in, input_query);
 
             //обрабатываем запрос
             if (input_query != "") {
@@ -177,7 +179,7 @@ void Input(TransportCatalogue& catalogue) {
         }
 
         for (auto stop : stops) {
-            catalogue.AddDistance(ParseDistance(catalogue, stop));
+            ParseDistance(catalogue, stop);
         }
 
         for (auto& bus : buses) {

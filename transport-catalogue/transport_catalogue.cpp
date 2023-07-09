@@ -4,7 +4,7 @@
 
 namespace transport_catalogue {
 
-void TransportCatalogue::AddStop(Stop&& stop) {
+void TransportCatalogue::AddStop(const Stop&& stop) {
     stops_.push_back(std::move(stop));
 
     //указатель на добавленную остановку
@@ -15,7 +15,7 @@ void TransportCatalogue::AddStop(Stop&& stop) {
     stop_names_.insert(StopMap::value_type(stop_ptr->name, stop_ptr));
 }
 
-void TransportCatalogue::AddBus(Bus&& bus) {
+void TransportCatalogue::AddBus(const Bus&& bus) {
     buses_.push_back(std::move(bus));
 
     //указатель на добавленный автобус
@@ -30,13 +30,12 @@ void TransportCatalogue::AddBus(Bus&& bus) {
     }
 }
 
-void TransportCatalogue::AddDistance(std::vector<Distance> distances) {
-    for (auto distance : distances) {
-        auto stops_pair = std::make_pair(distance.A, distance.B);
+void TransportCatalogue::AddDistance(const Stop* stop_a, const Stop* stop_b, int distance) {
+
+        auto stops_pair = std::make_pair(stop_a, stop_b);
         
         //DistanceMap = std::unordered_map<std::pair<const Stop*, const Stop*>, int, DistanceHasher>;
-        distance_beetween_stops_.insert(DistanceMap::value_type(stops_pair, distance.distance));
-    }
+        distance_beetween_stops_.insert(DistanceMap::value_type(stops_pair, distance));
 }
 
 Bus* TransportCatalogue::GetBus(std::string_view bus) {
@@ -64,20 +63,24 @@ Stop* TransportCatalogue::GetStop(std::string_view stop) {
 }
 
 //возвращает кол-во уникальных остановок для маршрута
-size_t TransportCatalogue::GetUniqueStopsForBus(const Bus* bus) {
-    std::unordered_set<const Stop*> unique_stops;
+std::set<const Stop*> TransportCatalogue::GetUniqueStopsForBus(const Bus* bus) {
+    std::set<const Stop*> unique_stops_sorted;
+    std::deque<Stop*>  all_stops = GetAllStopsForBus(bus);
 
-    unique_stops.insert(bus->stops.begin(), bus->stops.end());
+    unique_stops_sorted.insert(all_stops.begin(), all_stops.end());
 
-    return unique_stops.size();
+    return unique_stops_sorted;
 }
 
-std::unordered_set<const Bus*> TransportCatalogue::GetUniqueBusesForStop(Stop* stop) {
-    std::unordered_set<const Bus*> unique_stops;
+std::set<std::string> TransportCatalogue::GetUniqueBusesForStop(Stop* stop) {
+    std::set<std::string> unique_buses;
+    std::vector<Bus*> all_buses = GetAllBusesForStop(stop);
 
-    unique_stops.insert(stop->buses.begin(), stop->buses.end());
+    for (auto bus : all_buses) {
+        unique_buses.insert(bus->name);
+    }
 
-    return unique_stops;
+    return unique_buses;
 }
 
 //вычисляет географическое расстояние
@@ -89,8 +92,8 @@ double TransportCatalogue::GetLength(Bus* bus) {
         0.0,
         std::plus<>{},
         [](const Stop* lhs, const Stop* rhs) {
-            return geo::ComputeDistance({ (*lhs).latitude, (*lhs).longitude }, 
-                                   { (*rhs).latitude, (*rhs).longitude });
+            return geo::ComputeDistance({ (*lhs).coordinates.lat, (*lhs).coordinates.lng },
+                                   { (*rhs).coordinates.lat, (*rhs).coordinates.lng });
         });
 }
 
@@ -120,6 +123,16 @@ size_t TransportCatalogue::GetDistanceForBus(Bus* bus) {
         distance += GetDistanceForStop(bus->stops[i], bus->stops[i + 1]);
     }
     return distance;
+}
+
+
+
+std::deque<Stop*> TransportCatalogue::GetAllStopsForBus(const Bus* bus) {
+    return  bus->stops;
+}
+
+std::vector<Bus*> TransportCatalogue::GetAllBusesForStop(Stop* stop) {
+    return stop->buses;
 }
 
 }//завершаем пространство имён transport_catalogue

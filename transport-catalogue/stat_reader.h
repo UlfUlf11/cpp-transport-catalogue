@@ -7,13 +7,13 @@
 namespace transport_catalogue {
 	namespace output {
 
-		void BusQuery(TransportCatalogue& catalogue, std::string_view bus_name);
+		void BusQuery(std::ostream& out,TransportCatalogue& catalogue, std::string_view bus_name);
 
-		void StopQuery(TransportCatalogue& catalogue, std::string_view stop_name);
+		void StopQuery(std::ostream& out, TransportCatalogue& catalogue, std::string_view stop_name);
 
-		void ParseQuery(TransportCatalogue& catalogue, std::string_view str);
+		void ParseQuery(std::ostream& out, TransportCatalogue& catalogue, std::string_view str);
 
-		void Output(TransportCatalogue& catalogue);
+		void Output(std::istream& in, std::ostream& out, TransportCatalogue& catalogue);
 
 	}//завершаем пространство имён output
 }//завершаем пространство имён transport_catalogue

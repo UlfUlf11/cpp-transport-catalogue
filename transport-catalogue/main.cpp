@@ -17,6 +17,6 @@ using namespace transport_catalogue;
 
 int main() {
     TransportCatalogue catalogue;
-    input::Input(catalogue);
-    output::Output(catalogue);
+    input::Input(std::cin, catalogue);
+    output::Output(std::cin, std::cout, catalogue);
 }

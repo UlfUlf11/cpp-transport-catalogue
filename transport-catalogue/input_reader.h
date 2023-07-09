@@ -12,9 +12,9 @@ namespace transport_catalogue {
 
 		Bus ParseBus(TransportCatalogue& catalogue, std::string_view str);
 
-		std::vector<Distance> ParseDistance(TransportCatalogue& catalogue, std::string str);
+		void ParseDistance(TransportCatalogue& catalogue, std::string str);
 
-		void Input(TransportCatalogue& catalogue);
+		void Input(std::istream& in, TransportCatalogue& catalogue);
 
 	}//завершаем пространство имён input
 }//завершаем пространство имён transport_catalogue
