@@ -1,22 +1,42 @@
-﻿#include "transport_catalogue.h"
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "transport_catalogue.h"
+#include "json_reader.h"
+#include "domain.h"
+#include "map_renderer.h"
+#include "request_handler.h"
 
-
-//сделал следующие пространства имен :
-// transport_catalogue {
-//     input{}
-//     output{}
-//     geo{}
-//} завершаем пространство имён transport_catalogue
-
-
+using namespace std;
 using namespace transport_catalogue;
-//using namespace transport_catalogue::input;
-//using namespace transport_catalogue::output;
+using namespace transport_catalogue::detail;
+using namespace transport_catalogue::detail::json;
 
-int main() {
+int main()
+{
+    //stat_requests — массив с запросами к транспортному справочнику(заполняются через Input)
+    std::vector<transport_catalogue::input::StatRequest> stat_request;
+
+    //настройки вывода изображения карты (заполняются через Input)
+    map_renderer::RenderSettings render_settings;
+
     TransportCatalogue catalogue;
-    input::Input(std::cin, catalogue);
-    output::Output(std::cin, std::cout, catalogue);
+
+    /*
+    Данные поступают из stdin в формате JSON-объекта. Его верхнеуровневая структура:
+    {
+      "base_requests": [ ... ],
+      "render_settings": [ ... ],
+      "stat_requests": [ ... ]
+    }
+    */
+    input::Input(std::cin, catalogue, stat_request, render_settings);
+
+    //создаём визуализатор карты и с его помощью рисуем карту
+    map_renderer::MapRenderer map_render(render_settings);
+
+    //
+    request_handler::RequestHandler request_handler(catalogue, map_render);
+
+    //request_handler.RenderMap(std::cout);
+
+    //выводим все запросы
+    output::Output(catalogue, stat_request, request_handler);
 }
