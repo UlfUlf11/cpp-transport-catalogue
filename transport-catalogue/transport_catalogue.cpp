@@ -4,6 +4,96 @@
 namespace transport_catalogue
 {
 
+BusStat TransportCatalogue::GetAllInfoAboutBus(Bus* bus)
+{
+    BusStat bus_stat;
+
+    bus_stat.name = bus->name;
+    bus_stat.not_found = false;
+    bus_stat.stops_on_route = bus->stops.size();
+    bus_stat.unique_stops = GetUniqueStopsForBus(bus).size();
+    bus_stat.route_length = bus->route_length;
+    bus_stat.curvature = double(GetDistanceForBus(bus) / GetLength(bus));
+
+    return bus_stat;
+}
+
+
+detail::BusStat TransportCatalogue::GetBusStat(std::string_view bus_name)
+{
+    detail::BusStat bus_stat;
+
+    Bus* bus = GetBus(bus_name);
+    if (bus != nullptr)
+    {
+        bus_stat = GetAllInfoAboutBus(bus);
+    }
+    else
+    {
+        bus_stat.name = bus_name;
+        bus_stat.not_found = true;
+    }
+    return bus_stat;
+}
+
+
+detail::StopStat TransportCatalogue::StopQuery(std::string_view stop_name)
+{
+    std::set<std::string> unique_buses;
+
+    detail::StopStat stop_info;
+
+    Stop* stop = GetStop(stop_name);
+
+    if (stop != NULL)
+    {
+
+        stop_info.name = stop->name;
+        stop_info.not_found = false;
+        unique_buses = GetUniqueBusesForStop(stop);
+
+        if (unique_buses.size() > 0)
+        {
+
+            for (const auto bus : unique_buses)
+            {
+                stop_info.buses_name.push_back(bus);
+            }
+            std::sort(stop_info.buses_name.begin(), stop_info.buses_name.end());
+        }
+
+    }
+    else
+    {
+        stop_info.name = stop_name;
+        stop_info.not_found = true;
+    }
+
+    return stop_info;
+}
+
+
+std::vector<geo::Coordinates> TransportCatalogue::GetStopCoordinates() const
+{
+
+    std::vector<geo::Coordinates> stops_coordinates;
+    auto buses = GetBusNames();
+
+    for (auto& [busname, bus] : buses)
+    {
+        for (auto& stop : bus->stops)
+        {
+            geo::Coordinates coordinates;
+            coordinates.latitude = stop->coordinates.latitude;
+            coordinates.longitude = stop->coordinates.longitude;
+
+            stops_coordinates.push_back(coordinates);
+        }
+    }
+    return stops_coordinates;
+}
+
+
 void TransportCatalogue::AddStop(const Stop&& stop)
 {
     stops_.push_back(std::move(stop));
@@ -37,7 +127,6 @@ void TransportCatalogue::AddBus(const Bus&& bus)
 
 void TransportCatalogue::AddDistance(const Stop* stop_a, const Stop* stop_b, int distance)
 {
-
     auto stops_pair = std::make_pair(stop_a, stop_b);
 
     //DistanceMap = std::unordered_map<std::pair<const Stop*, const Stop*>, int, DistanceHasher>;

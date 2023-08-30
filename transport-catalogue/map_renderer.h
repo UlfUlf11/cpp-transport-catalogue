@@ -3,6 +3,8 @@
 #include <optional>
 #include <algorithm>
 #include <cstdlib>
+#include <vector>
+#include <map>
 
 #include "domain.h"
 #include "geo.h"
@@ -73,6 +75,12 @@ public:
     void ConstructCircle(svg::Circle& circle, svg::Point position) const;
     void ConstructStopTextSubstrate(svg::Text& text, const std::string& name, svg::Point position) const;
     void ConstructStopText(svg::Text& text, const std::string& name, svg::Point position) const;
+
+    void BuildingMapAddLine(std::vector<std::pair<Bus*, int>>& buses_palette, svg::Document& doc, SphereProjector& sphere_projector) const;
+    void BuildingMapAddBusesNames(std::vector<std::pair<Bus*, int>>& buses_palette, svg::Document& doc, SphereProjector& sphere_projector) const;
+    void BuildingMapAddStopsCircles(svg::Document& doc, SphereProjector& sphere_projector, std::vector<Stop*> stops_ptrs) const;
+    void BuildingMapAddStopsNames(svg::Document& doc, SphereProjector& sphere_projector, std::vector<Stop*> stops_ptrs) const;
+
 
 private:
     RenderSettings& render_settings_;

@@ -34,8 +34,10 @@ Bus ParseBus(Node& node, TransportCatalogue& catalogue);
 std::vector<std::tuple<Stop*, Stop*, int>> ParseDistance(Node& node, TransportCatalogue& catalogue);
 void ParseBaseRequest(const Node& root, TransportCatalogue& catalogue);
 
+svg::Color ReturnPalette(Array& arr_color);
+
 //функция считывает настройки вывода карты
-void parse_node_render(const Node& node, map_renderer::RenderSettings& rend_set);
+void ParseNodeRender(const Node& node, map_renderer::RenderSettings& rend_set);
 
 //функция заполняет вектор <StatRequest> запросами на вывод
 void ParceStatRequest(const Node& root, std::vector<StatRequest>& stat_request);
@@ -54,12 +56,11 @@ namespace output
 using namespace transport_catalogue::detail::json;
 using namespace transport_catalogue::detail;
 
-Node ReturnStopAsJsonNode(int id_request, transport_catalogue::detail::StopStat query_result);
-Node ReturnBusAsJsonNode(int id_request, transport_catalogue::detail::BusStat query_result);
-Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler);
-    
 //вывод в формате json
-void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::input::StatRequest>& stat_requests, request_handler::RequestHandler request_handler);    
+void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::input::StatRequest>& stat_requests, request_handler::RequestHandler request_handler);
+Node ExecuteMakeNodeStop(int id_request, transport_catalogue::detail::StopStat query_result);
+Node ExecuteMakeNodeBus(int id_request, transport_catalogue::detail::BusStat query_result);
+Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler);
 
 }//завершаем пространство имён output
 }//end namespace transport_catalogue

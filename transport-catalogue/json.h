@@ -18,25 +18,20 @@ class Node;
 using Dict = std::map<std::string, Node>;
 using Array = std::vector<Node>;
 
+
+
 class ParsingError : public std::runtime_error
 {
 public:
     using runtime_error::runtime_error;
 };
 
-class Node
+
+class Node final:  public std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>
 {
 public:
-    using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
-
-    Node() = default;
-    Node(bool value);
-    Node(Array array);
-    Node(Dict map);
-    Node(int value);
-    Node(std::string value);
-    Node(std::nullptr_t);
-    Node(double value);
+    using variant::variant;
+    using Value = variant;
 
     const Array& AsArray() const;
     const Dict& AsMap() const;
@@ -56,11 +51,11 @@ public:
 
     const Value& GetValue() const
     {
-        return value_;
+        return *this;
     };
 
 private:
-    Value value_;
+
 };
 
 inline bool operator==(const Node& lhs, const Node& rhs)

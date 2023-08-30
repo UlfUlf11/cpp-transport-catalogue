@@ -7,7 +7,6 @@ namespace input
 
 using namespace transport_catalogue::detail::json;
 
-
 //из запроса пользователя создается остановка
 Stop ParseStop(Node& node)
 {
@@ -237,8 +236,29 @@ void ParceStatRequest(const Node& node, std::vector<StatRequest>& stat_request)
 }
 
 
+svg::Color ReturnPalette(Array& arr_color)
+{
+
+    uint8_t red_ = arr_color[0].AsInt();
+    uint8_t green_ = arr_color[1].AsInt();
+    uint8_t blue_ = arr_color[2].AsInt();
+    double opacity_;
+
+    if (arr_color.size() == 4)
+    {
+        opacity_ = arr_color[3].AsDouble();
+        return svg::Color(svg::Rgba(red_, green_, blue_, opacity_));
+    }
+    else if (arr_color.size() == 3)
+    {
+        return svg::Color(svg::Rgb(red_, green_, blue_));
+    }
+    return std::monostate();
+}
+
+
 //считываем настройки вывода карты
-void parce_node_render(const Node& node, map_renderer::RenderSettings& rend_set)
+void ParseNodeRender(const Node& node, map_renderer::RenderSettings& rend_set)
 {
     //данные должны поступить в виде словаря
     Dict rend_map;
@@ -247,10 +267,6 @@ void parce_node_render(const Node& node, map_renderer::RenderSettings& rend_set)
     Array stop_lab_offset;
     Array arr_color;
     Array arr_palette;
-    uint8_t red_;
-    uint8_t green_;
-    uint8_t blue_;
-    double opacity_;
 
     if (node.IsMap())
     {
@@ -286,25 +302,7 @@ void parce_node_render(const Node& node, map_renderer::RenderSettings& rend_set)
         else if (rend_map.at("underlayer_color").IsArray())
         {
             arr_color = rend_map.at("underlayer_color").AsArray();
-            red_ = arr_color[0].AsInt();
-            green_ = arr_color[1].AsInt();
-            blue_ = arr_color[2].AsInt();
-
-            if (arr_color.size() == 4)
-            {
-                opacity_ = arr_color[3].AsDouble();
-                rend_set.underlayer_color_ = svg::Color(svg::Rgba(red_,
-                                                        green_,
-                                                        blue_,
-                                                        opacity_));
-            }
-            else if (arr_color.size() == 3)
-            {
-                rend_set.underlayer_color_ = svg::Color(svg::Rgb(red_,
-                                                        green_,
-                                                        blue_));
-            }
-
+            rend_set.underlayer_color_ = ReturnPalette(arr_color);
         }
 
         rend_set.underlayer_width_ = rend_map.at("underlayer_width").AsDouble();
@@ -323,29 +321,10 @@ void parce_node_render(const Node& node, map_renderer::RenderSettings& rend_set)
                 else if (color_palette.IsArray())
                 {
                     arr_color = color_palette.AsArray();
-                    red_ = arr_color[0].AsInt();
-                    green_ = arr_color[1].AsInt();
-                    blue_ = arr_color[2].AsInt();
-
-                    if (arr_color.size() == 4)
-                    {
-                        opacity_ = arr_color[3].AsDouble();
-                        rend_set.color_palette_.push_back(svg::Color(svg::Rgba(red_,
-                                                          green_,
-                                                          blue_,
-                                                          opacity_)));
-                    }
-                    else if (arr_color.size() == 3)
-                    {
-                        rend_set.color_palette_.push_back(svg::Color(svg::Rgb(red_,
-                                                          green_,
-                                                          blue_)));
-                    }
+                    rend_set.color_palette_.push_back(ReturnPalette(arr_color));
                 }
             }
         }
-
-
     }
     else
     {
@@ -357,23 +336,20 @@ void parce_node_render(const Node& node, map_renderer::RenderSettings& rend_set)
 //разделяем запросы на обращения к каталогу, ввод настроек отображения карты и вывод
 void ParseNode(const Node& root, TransportCatalogue& catalogue, [[maybe_unused]] std::vector<StatRequest>& stat_request, map_renderer::RenderSettings& render_settings)
 {
-
     Dict dict;
 
     //запрос должен быть словарем
     if (root.IsMap())
     {
-
         //получаем словарь со всеми запросами
         dict = root.AsMap();
 
         //передаем массивы обращений к каталогу и запросов на вывод
         ParseBaseRequest(dict.at("base_requests"), catalogue);
 
-        parce_node_render(dict.at("render_settings"), render_settings);
+        ParseNodeRender(dict.at("render_settings"), render_settings);
 
         ParceStatRequest(dict.at("stat_requests"), stat_request);
-
     }
     else
     {
@@ -409,12 +385,12 @@ void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::inpu
 
         if (req.type == "Stop")
         {
-            result_request.push_back(ReturnStopAsJsonNode(req.id, request_handler.StopQuery(catalogue, req.name)));
+            result_request.push_back(ExecuteMakeNodeStop(req.id, request_handler.StopQuery(catalogue, req.name)));
 
         }
         else if (req.type == "Bus")
         {
-            result_request.push_back(ReturnBusAsJsonNode(req.id, request_handler.GetBusStat(catalogue, req.name)));
+            result_request.push_back(ExecuteMakeNodeBus(req.id, request_handler.GetBusStat(catalogue, req.name)));
         }
         else if (req.type == "Map")
         {
@@ -426,7 +402,7 @@ void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::inpu
     Print(doc_out, std::cout);
 }
 
-Node ReturnStopAsJsonNode(int id_request, transport_catalogue::detail::StopStat stop_info)
+Node ExecuteMakeNodeStop(int id_request, transport_catalogue::detail::StopStat stop_info)
 {
     Dict result;
     Array buses;
@@ -453,7 +429,7 @@ Node ReturnStopAsJsonNode(int id_request, transport_catalogue::detail::StopStat 
     return Node{ result };
 }
 
-Node ReturnBusAsJsonNode(int id_request, transport_catalogue::detail::BusStat bus_info)
+Node ExecuteMakeNodeBus(int id_request, transport_catalogue::detail::BusStat bus_info)
 {
     Dict result;
     std::string str_not_found = "not found";

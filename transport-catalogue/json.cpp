@@ -280,6 +280,8 @@ Node LoadDict(istream& input)
     {
         return Node(move(result));
     }
+
+
 }
 
 Node LoadNode(istream& input)
@@ -328,39 +330,6 @@ Node LoadNode(istream& input)
 
 }//end namespace
 
-Node::Node(Array array) :
-    value_(std::move(array))
-{
-}
-
-Node::Node(std::nullptr_t) :
-    Node() {}
-
-Node::Node(bool value)
-    : value_(value)
-{
-}
-
-Node::Node(Dict map)
-    : value_(move(map))
-{
-}
-
-Node::Node(int value)
-    : value_(value)
-{
-}
-
-Node::Node(string value)
-    : value_(move(value))
-{
-}
-
-Node::Node(double value)
-    : value_(value)
-{
-}
-
 const Array& Node::AsArray() const
 {
     using namespace std::literals;
@@ -368,7 +337,7 @@ const Array& Node::AsArray() const
     {
         throw std::logic_error("Error: not array"s);
     }
-    return std::get<Array>(value_);
+    return std::get<Array>(*this);
 }
 
 const Dict& Node::AsMap() const
@@ -378,7 +347,7 @@ const Dict& Node::AsMap() const
     {
         throw std::logic_error("Error: not dict"s);
     }
-    return std::get<Dict>(value_);
+    return std::get<Dict>(*this);
 }
 
 const string& Node::AsString() const
@@ -388,7 +357,7 @@ const string& Node::AsString() const
     {
         throw std::logic_error("Error: not string"s);
     }
-    return std::get<std::string>(value_);
+    return std::get<std::string>(*this);
 }
 
 int Node::AsInt() const
@@ -398,7 +367,7 @@ int Node::AsInt() const
     {
         throw std::logic_error("Error: not int"s);
     }
-    return std::get<int>(value_);
+    return std::get<int>(*this);
 }
 
 double Node::AsDouble() const
@@ -410,7 +379,7 @@ double Node::AsDouble() const
     }
     if (IsPureDouble())
     {
-        return std::get<double>(value_);
+        return std::get<double>(*this);
     }
     else
     {
@@ -425,17 +394,17 @@ bool Node::AsBool() const
     {
         throw std::logic_error("Error: not bool"s);
     }
-    return std::get<bool>(value_);
+    return std::get<bool>(*this);
 }
 
 bool Node::IsNull() const
 {
-    return std::holds_alternative<std::nullptr_t>(value_);
+    return std::holds_alternative<std::nullptr_t>(*this);
 }
 
 bool Node::IsInt() const
 {
-    return std::holds_alternative<int>(value_);
+    return std::holds_alternative<int>(*this);
 }
 
 bool Node::IsDouble() const
@@ -445,27 +414,27 @@ bool Node::IsDouble() const
 
 bool Node::IsPureDouble() const
 {
-    return std::holds_alternative<double>(value_);
+    return std::holds_alternative<double>(*this);
 }
 
 bool Node::IsBool() const
 {
-    return std::holds_alternative<bool>(value_);
+    return std::holds_alternative<bool>(*this);
 }
 
 bool Node::IsString() const
 {
-    return std::holds_alternative<std::string>(value_);
+    return std::holds_alternative<std::string>(*this);
 }
 
 bool Node::IsArray() const
 {
-    return std::holds_alternative<Array>(value_);
+    return std::holds_alternative<Array>(*this);
 }
 
 bool Node::IsMap() const
 {
-    return std::holds_alternative<Dict>(value_);
+    return std::holds_alternative<Dict>(*this);
 }
 
 
@@ -509,6 +478,7 @@ struct PrintContext
 void PrintNode(const Node& node, const PrintContext& context);
 
 
+
 struct PrintValue
 {
 
@@ -519,6 +489,7 @@ struct PrintValue
     {
         context.out << "null"s;
     }
+
 
     void operator()(const Array& nodes)
     {

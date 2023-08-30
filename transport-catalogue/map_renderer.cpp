@@ -3,6 +3,159 @@
 namespace map_renderer
 {
 
+
+void MapRenderer::BuildingMapAddLine(std::vector<std::pair<Bus*, int>>& buses_palette, svg::Document& doc, SphereProjector& sphere_projector) const
+{
+    std::vector<geo::Coordinates> stops_coordinates;
+
+    for (auto [bus, color] : buses_palette)
+    {
+        for (auto& stop : bus->stops)
+        {
+            geo::Coordinates coordinates;
+            coordinates.latitude = stop->coordinates.latitude;
+            coordinates.longitude = stop->coordinates.longitude;
+
+            stops_coordinates.push_back(coordinates);
+        }
+        svg::Polyline bus_line;
+        bool bus_empty = true;
+
+        for (auto& coordinates : stops_coordinates)
+        {
+            bus_empty = false;
+            bus_line.AddPoint(sphere_projector(coordinates));
+        }
+
+        if (!bus_empty)
+        {
+            ConstructPolyline(bus_line, color);
+            doc.Add(bus_line);
+        }
+        stops_coordinates.clear();
+    }
+}
+
+
+void MapRenderer::BuildingMapAddBusesNames(std::vector<std::pair<Bus*, int>>& buses_palette, svg::Document& doc, SphereProjector& sphere_projector) const
+{
+
+    //вектор координат остановок
+    std::vector<geo::Coordinates> stops_coordinates;
+
+    //флаг чтобы добавлять координаты только один раз
+    bool bus_empty = true;
+
+    for (auto [bus, palette] : buses_palette)
+    {
+        for (auto& stop : bus->stops)
+        {
+            geo::Coordinates coordinates;
+            coordinates.latitude = stop->coordinates.latitude;
+            coordinates.longitude = stop->coordinates.longitude;
+
+            stops_coordinates.push_back(coordinates);
+
+            if (bus_empty) bus_empty = false;
+        }
+
+        if (!bus_empty)
+        {
+            if (bus->is_roundtrip)
+            {
+                svg::Text first_stop_substrate;
+                svg::Text first_stop;
+
+                //подложка для кольцевого
+                ConstructBusTextSubstrate(first_stop_substrate, std::string(bus->name), sphere_projector(stops_coordinates[0]));
+                doc.Add(first_stop_substrate);
+
+                //конечная остановка кольцевого
+                ConstructBusText(first_stop, std::string(bus->name), palette, sphere_projector(stops_coordinates[0]));
+                doc.Add(first_stop);
+            }
+            else
+            {
+                svg::Text first_stop_substrate;
+                svg::Text first_stop;
+                svg::Text second_stop_substrate;
+                svg::Text last_stop;
+
+                //подложка для начальной остановки некольцевого
+                ConstructBusTextSubstrate(first_stop_substrate, std::string(bus->name), sphere_projector(stops_coordinates[0]));
+                doc.Add(first_stop_substrate);
+
+                //название для начальной остановки некольцевого
+                ConstructBusText(first_stop, std::string(bus->name), palette, sphere_projector(stops_coordinates[0]));
+                doc.Add(first_stop);
+
+                //конечная остановка посередине маршрута
+                if (stops_coordinates[0] != stops_coordinates[stops_coordinates.size() / 2])
+                {
+
+                    //подложка для конечной остановки некольцевого
+                    ConstructBusTextSubstrate(second_stop_substrate, std::string(bus->name), sphere_projector(stops_coordinates[stops_coordinates.size() / 2]));
+                    doc.Add(second_stop_substrate);
+
+                    //название для конечной остановки некольцевого
+                    ConstructBusText(last_stop, std::string(bus->name), palette, sphere_projector(stops_coordinates[stops_coordinates.size() / 2]));
+                    doc.Add(last_stop);
+                }
+            }
+        }
+
+        bus_empty = false;
+        stops_coordinates.clear();
+    }
+}
+
+
+void MapRenderer::BuildingMapAddStopsCircles(svg::Document& doc, SphereProjector& sphere_projector, std::vector<Stop*> stops_ptrs) const
+{
+    svg::Circle circle;
+
+    for (Stop* stop_ptr : stops_ptrs)
+    {
+        if (stop_ptr)
+        {
+            geo::Coordinates coordinates;
+            coordinates.latitude = stop_ptr->coordinates.latitude;
+            coordinates.longitude = stop_ptr->coordinates.longitude;
+
+            ConstructCircle(circle, sphere_projector(coordinates));
+            doc.Add(circle);
+        }
+    }
+}
+
+
+void MapRenderer::BuildingMapAddStopsNames(svg::Document& doc, SphereProjector& sphere_projector, std::vector<Stop*> stops_ptrs) const
+{
+    svg::Text stop_name_substrate;
+    svg::Text stop_name;
+
+    for (Stop* stop_ptr : stops_ptrs)
+    {
+        if (stop_ptr)
+        {
+            geo::Coordinates coordinates;
+            coordinates.latitude = stop_ptr->coordinates.latitude;
+            coordinates.longitude = stop_ptr->coordinates.longitude;
+
+            //подложка для названия остановки
+            ConstructStopTextSubstrate(stop_name_substrate,
+                                       stop_ptr->name, sphere_projector(coordinates));
+            doc.Add(stop_name_substrate);
+
+            //название остановки
+            ConstructStopText(stop_name,
+                              stop_ptr->name, sphere_projector(coordinates));
+            doc.Add(stop_name);
+        }
+    }
+}
+
+
 bool IsZero(double value)
 {
     return std::abs(value) < EPSILON;

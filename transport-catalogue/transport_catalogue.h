@@ -59,6 +59,16 @@ public:
     int GetDistanceForStop(const Stop* point_a, const Stop* point_b);
     int GetDistanceForBus(Bus* bus);
 
+    BusStat GetAllInfoAboutBus(Bus* bus);
+
+    // Возвращает информацию о маршруте (запрос Bus)
+    detail::BusStat GetBusStat(std::string_view str);
+
+    // Возвращает маршруты, проходящие через
+    detail::StopStat StopQuery(std::string_view stop_name);
+
+    std::vector<geo::Coordinates> GetStopCoordinates() const;
+
 private:
 
     std::deque<Stop> stops_;

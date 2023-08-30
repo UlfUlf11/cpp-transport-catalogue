@@ -33,10 +33,6 @@ private:
 
     void BuildingMap(std::ostream& out) const;
 
-    void BuildingMapAddLine(std::vector<std::pair<Bus*, int>>& buses_palette, svg::Document& doc, SphereProjector& sphere_projector) const;
-    void BuildingMapAddBusesNames(std::vector<std::pair<Bus*, int>>& buses_palette, svg::Document& doc, SphereProjector& sphere_projector) const;
-    void BuildingMapAddStopsCircles(svg::Document& doc, SphereProjector& sphere_projector, std::set<std::string_view>& stops_name) const;
-    void BuildingMapAddStopsNames(svg::Document& doc, SphereProjector& sphere_projector, std::set<std::string_view>& stops_name) const;
 };
 
 }//end namespace request_handler
