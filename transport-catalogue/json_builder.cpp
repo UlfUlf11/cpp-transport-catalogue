@@ -87,9 +87,6 @@ void Builder::AddNode(Node node)
     }
     else
     {
-
-
-
         if (nodes_stack_.back()->IsArray())
         {
             Array arr = nodes_stack_.back()->AsArray();
