@@ -243,7 +243,7 @@ int TransportCatalogue::GetDistanceForStop(const Stop* point_a, const Stop* poin
 int TransportCatalogue::GetDistanceForBus(Bus* bus)
 {
     int distance = 0;
-    auto stops_size = bus->stops.size() - 1;
+    int stops_size = bus->stops.size() - 1;
     for (int i = 0; i < stops_size; i++)
     {
         distance += GetDistanceForStop(bus->stops[i], bus->stops[i + 1]);

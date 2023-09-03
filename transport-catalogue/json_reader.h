@@ -1,9 +1,11 @@
 #pragma once
+#include "json_builder.h"
 #include "json.h"
 #include "transport_catalogue.h"
 #include "domain.h"
 #include "map_renderer.h"
 #include "request_handler.h"
+
 
 namespace transport_catalogue
 {
@@ -40,7 +42,7 @@ svg::Color ReturnPalette(Array& arr_color);
 void ParseNodeRender(const Node& node, map_renderer::RenderSettings& rend_set);
 
 //функция заполняет вектор <StatRequest> запросами на вывод
-void ParceStatRequest(const Node& root, std::vector<StatRequest>& stat_request);
+void ParseStatRequest(const Node& root, std::vector<StatRequest>& stat_request);
 
 //разделяем запросы на обращения к каталогу, ввод настроек отображения карты и вывод
 void ParseNode(const Node& root, TransportCatalogue& catalogue, std::vector<StatRequest>& stat_request, map_renderer::RenderSettings& render_settings);
@@ -60,7 +62,7 @@ using namespace transport_catalogue::detail;
 void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::input::StatRequest>& stat_requests, request_handler::RequestHandler request_handler);
 Node ExecuteMakeNodeStop(int id_request, transport_catalogue::detail::StopStat query_result);
 Node ExecuteMakeNodeBus(int id_request, transport_catalogue::detail::BusStat query_result);
-Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler);
+Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler, TransportCatalogue& catalogue);
 
 }//завершаем пространство имён output
 }//end namespace transport_catalogue

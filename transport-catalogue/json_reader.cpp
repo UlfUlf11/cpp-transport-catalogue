@@ -195,7 +195,7 @@ void ParseBaseRequest(const Node& root, TransportCatalogue& catalogue)
 }
 
 
-void ParceStatRequest(const Node& node, std::vector<StatRequest>& stat_request)
+void ParseStatRequest(const Node& node, std::vector<StatRequest>& stat_request)
 {
     Array stat_requests;
     Dict req_map;
@@ -349,7 +349,7 @@ void ParseNode(const Node& root, TransportCatalogue& catalogue, [[maybe_unused]]
 
         ParseNodeRender(dict.at("render_settings"), render_settings);
 
-        ParceStatRequest(dict.at("stat_requests"), stat_request);
+        ParseStatRequest(dict.at("stat_requests"), stat_request);
     }
     else
     {
@@ -394,7 +394,7 @@ void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::inpu
         }
         else if (req.type == "Map")
         {
-            result_request.push_back(ReturnMapAsJsonNode(req.id, request_handler));
+            result_request.push_back(ReturnMapAsJsonNode(req.id, request_handler, catalogue));
         }
     }
     doc_out = Document{ Node{result_request} };
@@ -404,69 +404,88 @@ void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::inpu
 
 Node ExecuteMakeNodeStop(int id_request, transport_catalogue::detail::StopStat stop_info)
 {
-    Dict result;
+    Node result;
     Array buses;
+    Builder builder;
+
     std::string str_not_found = "not found";
 
     if (stop_info.not_found)
     {
-        result.emplace("request_id", Node{ id_request });
-        result.emplace("error_message", Node{ str_not_found });
+        builder.StartDict()
+        .Key("request_id").Value(id_request)
+        .Key("error_message").Value(str_not_found)
+        .EndDict();
 
+        result = builder.Build();
     }
     else
     {
-        result.emplace("request_id", Node{ id_request });
+        builder.StartDict()
+        .Key("request_id").Value(id_request)
+        .Key("buses").StartArray();
 
         for (std::string bus_name : stop_info.buses_name)
         {
-            buses.push_back(Node{ bus_name });
+            builder.Value(bus_name);
         }
 
-        result.emplace("buses", Node{ buses });
+        builder.EndArray().EndDict();
+
+        result = builder.Build();
     }
 
-    return Node{ result };
+    return result;
 }
 
 Node ExecuteMakeNodeBus(int id_request, transport_catalogue::detail::BusStat bus_info)
 {
-    Dict result;
+    Node result;
+    Builder builder;
     std::string str_not_found = "not found";
 
     if (bus_info.not_found)
     {
-        result.emplace("request_id", Node{ id_request });
-        result.emplace("error_message", Node{ str_not_found });
+        builder.StartDict()
+        .Key("request_id").Value(id_request)
+        .Key("error_message").Value(str_not_found)
+        .EndDict();
 
+        result = builder.Build();
     }
     else
     {
-        result.emplace("request_id", Node{ id_request });
-        result.emplace("curvature", Node{ bus_info.curvature });
-        result.emplace("route_length", Node{ bus_info.route_length });
-        result.emplace("stop_count", Node{ bus_info.stops_on_route });
-        result.emplace("unique_stop_count", Node{ bus_info.unique_stops });
+        builder.StartDict()
+        .Key("request_id").Value(id_request)
+        .Key("curvature").Value(bus_info.curvature)
+        .Key("route_length").Value(bus_info.route_length)
+        .Key("stop_count").Value(bus_info.stops_on_route)
+        .Key("unique_stop_count").Value(bus_info.unique_stops)
+        .EndDict();
 
+        result = builder.Build();
     }
 
-    return Node{ result };
+    return result;
 }
 
-Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler)
+Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler, TransportCatalogue& catalogue)
 {
-    Dict result;
+    Node result;
+    Builder builder;
     std::ostringstream map_stream;
     std::string map_str;
 
-    request_handler.RenderMap(map_stream);
-
+    request_handler.RenderMap(map_stream, catalogue);
     map_str = map_stream.str();
 
-    result.emplace("request_id", Node(id_request));
-    result.emplace("map", Node(map_str));
+    builder.StartDict()
+    .Key("request_id").Value(id_request)
+    .Key("map").Value(map_str)
+    .EndDict();
+    result = builder.Build();
 
-    return Node(result);
+    return result;
 }
 
 }//завершаем пространство имён output
