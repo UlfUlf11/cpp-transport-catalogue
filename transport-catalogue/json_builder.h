@@ -19,9 +19,6 @@ class ArrayContext;
 class Builder
 {
 public:
-    Node ParseNode(Node::Value value_);
-    void AddNode(Node node);
-
     /*
     При определении словаря задаёт строковое значение ключа для очередной пары ключ-значение.
     Следующий вызов метода обязательно должен задавать соответствующее этому ключу значение
@@ -76,6 +73,7 @@ private:
     //Он поможет возвращаться в нужный контекст после вызова End-методов.
     std::vector<std::unique_ptr<Node>> nodes_stack_;
 
+    void AddNode(Node node);
 };
 
 class BaseContext
