@@ -1,68 +1,97 @@
 #pragma once
-#include "json_builder.h"
-#include "json.h"
-#include "transport_catalogue.h"
+
 #include "domain.h"
+#include "json.h"
+#include "json_builder.h"
 #include "map_renderer.h"
 #include "request_handler.h"
-
+#include "transport_catalogue.h"
+#include "transport_router.h"
 
 namespace transport_catalogue
 {
-namespace input
-{
+    namespace input
+    {
+        using namespace transport_catalogue::detail::json;
+        using namespace transport_catalogue::detail;
 
-using namespace transport_catalogue::detail::json;
-using namespace transport_catalogue::detail;
+        /*
+        Формат запроса:
+        {
+          "id": 12345678,
+          "type": "Bus",
+          "name": "14"
+        }
+        */
 
-/*
-Формат запроса:
-{
-  "id": 12345678,
-  "type": "Bus",
-  "name": "14"
-}
-*/
-struct StatRequest
-{
-    int id;
-    std::string type;
-    std::string name;
-};
+        struct StatRequest
+        {
+            int id;
+            std::string type;
+            std::string name;
+            std::string from;
+            std::string to;
+        };
 
-//функции заполняющие транспортный справочник
-Stop ParseStop(Node& node);
-Bus ParseBus(Node& node, TransportCatalogue& catalogue);
-std::vector<std::tuple<Stop*, Stop*, int>> ParseDistance(Node& node, TransportCatalogue& catalogue);
-void ParseBaseRequest(const Node& root, TransportCatalogue& catalogue);
+        //функции заполняющие транспортный справочник
 
-svg::Color ReturnPalette(Array& arr_color);
+        Stop ParseStop(Node& node);
 
-//функция считывает настройки вывода карты
-void ParseNodeRender(const Node& node, map_renderer::RenderSettings& rend_set);
+        Bus ParseBus(Node& node, TransportCatalogue& catalogue);
 
-//функция заполняет вектор <StatRequest> запросами на вывод
-void ParseStatRequest(const Node& root, std::vector<StatRequest>& stat_request);
+        std::vector<std::tuple<Stop*, Stop*, int>> ParseDistance(
+            Node& node, TransportCatalogue& catalogue);
 
-//разделяем запросы на обращения к каталогу, ввод настроек отображения карты и вывод
-void ParseNode(const Node& root, TransportCatalogue& catalogue, std::vector<StatRequest>& stat_request, map_renderer::RenderSettings& render_settings);
+        void ParseBaseRequest(const Node& root, TransportCatalogue& catalogue);
 
-//функция ввода всего
-void Input(std::istream& input, TransportCatalogue& catalogue, std::vector<StatRequest>& stat_request, map_renderer::RenderSettings& render_settings);
+        svg::Color ReturnPalette(Array& arr_color);
 
-}//end namespace input
+        //функция считывает настройки вывода карты
+        void ParseNodeRender(
+            const Node& node, map_renderer::RenderSettings& rend_set);
 
-namespace output
-{
+        //функция заполняет вектор <StatRequest> запросами на вывод
+        void ParseStatRequest(
+            const Node& root, std::vector<StatRequest>& stat_request);
 
-using namespace transport_catalogue::detail::json;
-using namespace transport_catalogue::detail;
+        void ParseNodeRouting(const Node& node, TransportCatalogue& catalogue);
 
-//вывод в формате json
-void Output(TransportCatalogue& catalogue, std::vector<transport_catalogue::input::StatRequest>& stat_requests, request_handler::RequestHandler request_handler);
-Node ExecuteMakeNodeStop(int id_request, transport_catalogue::detail::StopStat query_result);
-Node ExecuteMakeNodeBus(int id_request, transport_catalogue::detail::BusStat query_result);
-Node ReturnMapAsJsonNode(int id_request, request_handler::RequestHandler request_handler, TransportCatalogue& catalogue);
+        //разделяем запросы на обращения к каталогу, ввод настроек отображения карты и
+        //вывод
+        void ParseNode(const Node& root, TransportCatalogue& catalogue,
+            std::vector<StatRequest>& stat_request,
+            map_renderer::RenderSettings& render_settings);
 
-}//завершаем пространство имён output
-}//end namespace transport_catalogue
+        //функция ввода всего
+        void Input(std::istream& input, TransportCatalogue& catalogue,
+            std::vector<StatRequest>& stat_request,
+            map_renderer::RenderSettings& render_settings);
+
+    } // end namespace input
+
+    namespace output {
+        using namespace transport_catalogue::detail::json;
+        using namespace transport_catalogue::detail;
+
+        //вывод в формате json
+        void Output(TransportCatalogue& catalogue,
+            std::vector<transport_catalogue::input::StatRequest>& stat_requests,
+            request_handler::RequestHandler request_handler,
+            graph::TransportRouter& router);
+
+        Node ExecuteMakeNodeStop(
+            int id_request, transport_catalogue::detail::StopStat query_result);
+
+        Node ExecuteMakeNodeBus(
+            int id_request, transport_catalogue::detail::BusStat query_result);
+
+        Node ReturnMapAsJsonNode(int id_request,
+            request_handler::RequestHandler request_handler,
+            TransportCatalogue& catalogue);
+
+        Node ExecuteMakeNodeRouter(transport_catalogue::input::StatRequest& request,
+            TransportCatalogue& catalogue, graph::TransportRouter& router);
+
+    } //завершаем пространство имён output
+
+} // end namespace transport_catalogue

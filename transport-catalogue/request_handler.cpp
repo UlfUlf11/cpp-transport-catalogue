@@ -11,14 +11,12 @@ namespace request_handler
 
     BusStat RequestHandler::GetAllInfoAboutBus(Bus* bus, TransportCatalogue& catalogue)
     {
-
         return catalogue.GetAllInfoAboutBus(bus);
     }
 
 
     detail::BusStat RequestHandler::GetBusStat(TransportCatalogue& catalogue, std::string_view bus_name)
     {
-
         return catalogue.GetBusStat(bus_name);
     }
 
@@ -33,9 +31,6 @@ namespace request_handler
     {
         return db_.GetStopCoordinates();
     }
-
-
-
 
 
     void RequestHandler::RenderMap(std::ostream& out, TransportCatalogue& catalogue) const

@@ -2,8 +2,8 @@
 
 namespace transport_catalogue
 {
-namespace detail
-{
+	namespace detail
+	{
 
-}//end namespace detail
-}//end namespace transport_catalogue
+	} // end namespace detail
+} // end namespace transport_catalogue
