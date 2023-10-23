@@ -95,8 +95,6 @@ transport_catalogue_protobuf::TransportCatalogue SerializeCatalogue(const transp
     SerializeBus(buses, stops, transport_catalogue_proto);
     SerializeDistances(distances, stops, transport_catalogue_proto);
 
-
-
     return transport_catalogue_proto;
 }
 
