@@ -51,6 +51,11 @@ void CatalogueSerialization(const transport_catalogue::TransportCatalogue& trans
                             const transport_catalogue::detail::RoutingSettings& routing_settings,
                             std::ostream& out);
 
+void DeserializeStops(const transport_catalogue_protobuf::TransportCatalogue& proto_transport_catalogue, transport_catalogue::TransportCatalogue& transport_catalogue);
+
+void DeserializeDistances(const transport_catalogue_protobuf::TransportCatalogue& proto_transport_catalogue, transport_catalogue::TransportCatalogue& transport_catalogue, const std::deque<Stop>& stops);
+
+void DeserializeBuses(const transport_catalogue_protobuf::TransportCatalogue& proto_transport_catalogue, transport_catalogue::TransportCatalogue& transport_catalogue, const std::deque<Stop>& stops);
 
 transport_catalogue::TransportCatalogue DeserializeCatalogue(const transport_catalogue_protobuf::TransportCatalogue& transport_catalogue_proto);
 

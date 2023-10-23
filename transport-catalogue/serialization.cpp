@@ -206,42 +206,44 @@ void CatalogueSerialization(const transport_catalogue::TransportCatalogue& trans
 }
 
 
-transport_catalogue::TransportCatalogue DeserializeCatalogue(const transport_catalogue_protobuf::TransportCatalogue& transport_catalogue_proto)
+void DeserializeStops(const transport_catalogue_protobuf::TransportCatalogue& proto_transport_catalogue, transport_catalogue::TransportCatalogue& transport_catalogue)
 {
+    const auto& proto_stops = proto_transport_catalogue.stops();
 
-    //создаем транспортный каталог в который будем десереализировать
-    transport_catalogue::TransportCatalogue transport_catalogue;
-
-    const auto& stops_proto = transport_catalogue_proto.stops();
-    const auto& buses_proto = transport_catalogue_proto.buses();
-    const auto& distances_proto = transport_catalogue_proto.distances();
-
-    for (const auto& stop : stops_proto)
+    for (const auto& proto_stop : proto_stops)
     {
 
-        transport_catalogue::detail::Stop tc_stop;
+        transport_catalogue::detail::Stop stop;
 
-        tc_stop.name = stop.name();
-        tc_stop.coordinates.latitude = stop.latitude();
-        tc_stop.coordinates.longitude = stop.longitude();
+        stop.name = proto_stop.name();
+        stop.coordinates.latitude = proto_stop.latitude();
+        stop.coordinates.longitude = proto_stop.longitude();
 
-        transport_catalogue.AddStop(std::move(tc_stop));
+        transport_catalogue.AddStop(std::move(stop));
     }
+}
 
-    const auto& tc_stops = transport_catalogue.GetStops(); //const std::deque<Stop>&
+void DeserializeDistances(const transport_catalogue_protobuf::TransportCatalogue& proto_transport_catalogue, transport_catalogue::TransportCatalogue& transport_catalogue, const std::deque<Stop>& stops)
+{
+    const auto& proto_distances = proto_transport_catalogue.distances();
 
-    for (const auto& distance : distances_proto)
+    for (const auto& distance : proto_distances)
     {
 
 
-        transport_catalogue::detail::Stop* start = transport_catalogue.GetStop(tc_stops[distance.start()].name);
-        transport_catalogue::detail::Stop* end = transport_catalogue.GetStop(tc_stops[distance.end()].name);
+        transport_catalogue::detail::Stop* start = transport_catalogue.GetStop(stops[distance.start()].name);
+        transport_catalogue::detail::Stop* end = transport_catalogue.GetStop(stops[distance.end()].name);
 
         int dist = distance.distance();
 
         transport_catalogue.AddDistance(start, end, dist);
     }
+}
 
+
+void DeserializeBuses(const transport_catalogue_protobuf::TransportCatalogue& proto_transport_catalogue, transport_catalogue::TransportCatalogue& transport_catalogue, const std::deque<Stop>& stops)
+{
+    const auto& buses_proto = proto_transport_catalogue.buses();
 
     for (const auto& bus_proto : buses_proto)
     {
@@ -252,7 +254,7 @@ transport_catalogue::TransportCatalogue DeserializeCatalogue(const transport_cat
 
         for (auto stop_id : bus_proto.stops())
         {
-            auto name = tc_stops[stop_id].name;
+            auto name = stops[stop_id].name;
             tc_bus.stops.push_back(transport_catalogue.GetStop(name));
         }
 
@@ -261,6 +263,21 @@ transport_catalogue::TransportCatalogue DeserializeCatalogue(const transport_cat
 
         transport_catalogue.AddBus(std::move(tc_bus));
     }
+}
+
+
+transport_catalogue::TransportCatalogue DeserializeCatalogue(const transport_catalogue_protobuf::TransportCatalogue& transport_catalogue_proto)
+{
+    //создаем транспортный каталог в который будем десереализировать
+    transport_catalogue::TransportCatalogue transport_catalogue;
+
+    //сперва нужно обработать остановки для дальнейших действий
+    DeserializeStops(transport_catalogue_proto, transport_catalogue);
+    
+    const std::deque<Stop>& stops = transport_catalogue.GetStops();
+
+    DeserializeDistances(transport_catalogue_proto, transport_catalogue, stops);
+    DeserializeBuses(transport_catalogue_proto, transport_catalogue, stops);
 
     return transport_catalogue;
 }
@@ -355,7 +372,7 @@ Catalogue CatalogueDeserialization(std::istream& in)
 
     if (!success_parsing_catalogue_from_istream)
     {
-        throw std::runtime_error("cannot parse serialized file from istream");
+        throw std::runtime_error("cannot parse serialized file");
     }
 
     return {DeserializeCatalogue(catalogue_proto.transport_catalogue()),
