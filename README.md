@@ -50,3 +50,6 @@
 ##### request_handler.h
 класс RequestHandler.
 Формирует ответы на запросы к транспортному каталогу.
+
+Использованы CMake и protobuf.
+
